@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
+import { GoogleLogin } from 'react-google-login'; 
 import axios from 'axios';
 import { showError, showSuccess } from '../../utils/notification/Notification';
 import { dispatchLogin } from '../../../redux/actions/authAction'
@@ -33,6 +34,22 @@ function Login() {
         setUser({ ...user, [name]: value, err: '', success: '' })
     }
 
+    const responseGoogle = async (response) => {
+        console.log(response)
+        try {
+            const res = await axios.post('/user/google_login', {
+                tokenId: response.tokenId
+            })
+
+            setUser({ ...user, err: '' , success: res.data.msg })
+            localStorage.setItem('firstLogin', true);
+            dispatch(dispatchLogin())
+            history.push('/');
+        } catch (err) {
+            err.response.data.msg && setUser({ ...user, err: err.response.data.msg, success: '' });
+        }
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if(invalid) return setUser({...user, err: 'Password & Email cannot be empty!',  success: ''})
@@ -47,6 +64,7 @@ function Login() {
         }
     }
     return (
+        <>
         <Form onSubmit={handleSubmit}>
             <Header uppercase>Login</Header>
             {user.err && showError(user.err)}
@@ -72,10 +90,45 @@ function Login() {
             
         </Form>
 
+        <Hr>Or Login With</Hr>
 
+        <Social>
+       
+        <GoogleLogin
+            clientId="340715845185-gl9bdhc6kg5nm0cil5neani55rmafkgc.apps.googleusercontent.com"
+            buttonText="Login With Google Account"
+            onSuccess={responseGoogle}
+            onFailure='{}'
+            cookiePolicy={'single_host_origin'}
+        />
+        </Social>
 
+        </>
     )
 }
+
+
+const Social = styled.div`
+    display: flex;
+    justify-content: center;
+   
+   width: 100%;
+    margin: 10px 0;
+    height: 50px;
+    font-size: 14px;
+    font-weight: 200;
+    text-transform: capitalize;
+    letter-spacing: 1.3px;
+    box-shadow: 0 2px 4px #777;
+`
+
+const Hr = styled.div`
+  margin: 15px 0;
+    color: crimson;
+    text-align: center;
+   
+
+`
 
 const Button = styled.button`
 width: 150px;
